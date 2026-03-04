@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz for Exam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .quiz-container { max-width: 800px; margin: 2rem auto; padding: 2rem; background-color: #ffffff; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .option-btn { transition: all 0.2s ease-in-out; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.5; }
+        .option-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46; }
+        .incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
+        .selected { background-color: #e0f2fe; border-color: #38bdf8; }
+        .question-nav-btn { transition: all 0.2s ease-in-out; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .question-nav-btn.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .question-nav-btn.answered-correct { background-color: #bfdbfe; border-color: #60a5fa; color: #1e40af; }
+        .question-nav-btn.answered-incorrect { background-color: #fecaca; border-color: #f87171; color: #991b1b; }
+        .question-nav-btn:hover:not(.active) { background-color: #f3f4f6; }
+        .edit-input { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-top: 4px; }
+        .edit-label { font-weight: 500; color: #374151; margin-top: 12px; display: block; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8">
+
+    <div id="quiz-container" class="quiz-container w-full">
+        
+        <div class="text-center mb-8 relative">
+            <h1 class="text-3xl font-bold text-gray-800">Quiz for Exam</h1>
+            <p id="quiz-subtitle" class="text-gray-500 mt-2">Subject: Micology & Parasitology</p>
+            <p class="text-gray-500">Norton University</p>
+            <div class="absolute top-0 left-0 flex gap-2">
+                <button id="practice-sheet-btn" class="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 text-sm">Practice Sheet</button>
+                <button id="show-all-btn" class="bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg hover:bg-green-200 text-sm">Show Answers</button>
+            </div>
+            <button id="edit-quiz-btn" class="absolute top-0 right-0 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 text-sm">Edit Quiz</button>
+        </div>
+
+        <div class="text-center mb-6">
+            <div class="inline-flex rounded-md shadow-sm flex-wrap justify-center" role="group">
+                <button id="part1-btn" type="button" class="py-2 px-6 text-sm font-medium text-white bg-indigo-600 rounded-l-lg border border-gray-200 hover:bg-indigo-700">Part 1</button>
+                <button id="part2-btn" type="button" class="py-2 px-6 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100">Part 2</button>
+                <button id="part3-btn" type="button" class="py-2 px-6 text-sm font-medium text-gray-900 bg-white border border-gray-200 hover:bg-gray-100">Part 3</button>
+                <button id="part4-btn" type="button" class="py-2 px-6 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100">Part 4</button>
+                <button id="part5-btn" type="button" class="py-2 px-6 text-sm font-medium text-gray-900 bg-white border border-gray-200 hover:bg-gray-100">Part 5</button>
+                <button id="part6-btn" type="button" class="py-2 px-6 text-sm font-medium text-gray-900 bg-white border border-gray-200 hover:bg-gray-100">Part 6</button>
+                <button id="part7-btn" type="button" class="py-2 px-6 text-sm font-medium text-gray-900 bg-white rounded-r-md border border-gray-200 hover:bg-gray-100">Part 7</button>
+            </div>
+        </div>
+
+        <div id="quiz-view">
+            <div class="flex justify-between items-center mb-4">
+                 <div id="main-score-text" class="text-lg font-bold text-indigo-600"></div>
+                 <button id="redo-part-btn" class="bg-orange-100 text-orange-700 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 text-sm">Redo Part</button>
+            </div>
+            <div id="question-navigation" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+
+            <div id="question-area" class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="question-number" class="text-xl font-semibold text-gray-700"></h2>
+                </div>
+                <div id="question-text" class="text-lg text-gray-800 leading-relaxed"></div>
+            </div>
+
+            <div id="answer-area" class="grid grid-cols-1 md-grid-cols-2 gap-4"></div>
+            <div id="feedback-area" class="mt-6 text-center text-lg font-medium"></div>
+
+            <div class="mt-6 text-center">
+                <button id="redo-btn" class="hidden bg-yellow-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-yellow-600 transition-colors duration-300 shadow-lg">Redo Question</button>
+            </div>
+
+            <div class="mt-4 flex justify-between items-center">
+                <button id="prev-btn" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors duration-300 shadow-lg hidden"><span class="font-semibold">&larr; Previous</span></button>
+                <button id="next-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-lg hidden ml-auto"><span class="font-semibold">Next Question</span></button>
+            </div>
+
+            <div id="results-area" class="hidden text-center">
+                <div class="mb-4">
+                    <h2 class="text-4xl font-extrabold text-gray-800">Quiz Complete!</h2>
+                </div>
+                <p id="results-score" class="text-2xl text-gray-600 mb-6"></p>
+                <div id="summary" class="text-left mt-8 bg-gray-50 p-6 rounded-lg">
+                    <div class="text-center">
+                        <h3 class="text-xl font-bold text-gray-700">Review Your Answers:</h3>
+                    </div>
+                </div>
+                <button id="restart-btn" class="mt-8 bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-lg"><span class="font-semibold">Play Again</span></button>
+            </div>
+        </div>
+
+        <div id="practice-sheet-view" class="hidden"></div>
+        <div id="all-questions-view" class="hidden"></div>
+        <div id="edit-view" class="hidden">
+            <h2 class="text-2xl font-bold text-center mb-6">Edit Quiz Questions</h2>
+            <div id="edit-question-navigation" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+            <div id="edit-questions-container"></div>
+            <div class="flex justify-between items-start mt-8">
+                <button id="add-question-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Add Question</button>
+                <div>
+                    <button id="cancel-edit-btn" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 mr-4">Cancel</button>
+                    <button id="apply-preview-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Apply to Preview</button>
+                    <button id="generate-save-code-btn" class="bg-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-700 ml-4">Generate Save Code</button>
+                </div>
+            </div>
+            <div id="export-area" class="hidden mt-6 p-4 border-2 border-dashed border-purple-400 rounded-lg bg-purple-50">
+                <h3 class="text-lg font-semibold text-purple-800">How to Save Your Changes Permanently</h3>
+                <textarea id="export-output" readonly class="w-full h-64 p-2 border rounded-md bg-gray-100 font-mono text-sm focus:ring-2 focus:ring-indigo-500 mt-4 cursor-pointer"></textarea>
+                <p id="copy-feedback" class="text-purple-700 font-medium text-sm mt-2 h-4"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quizDataPart1 = [
+        {n:1,t:'m',q:"Ascariasis: The increasing prevalence of ascariasis are in :",o:["Rainy season","Under developed countries","Tropical and subtropical countries","A+B","A+B+C"],a:"A+B+C"},
+        {n:2,t:'m',q:"Hote definitif of ascariasis include:",o:["Human","Animal","Fish","Water","Others"],a:"Human"},
+        {n:3,t:'m',q:"Morphology of fertilized egg of ascariasis include:",o:["Measure between 85-95X43-47mm","Thin shelled","Mammillated","Elongated and larger than fertilized egg","Others"],a:"Mammillated"},
+        {n:4,t:'m',q:"Morphology of fertilized egg of ascariasis include:",o:["Elongated and smaller than fertilized egg","Measure between 85-95X43-47mm","Thin shelled","B+C","A+B+C"],a:"B+C"},
+        {n:5,t:'m',q:"Characteristics the eggs of ascariasis include:",o:["Eggs cannot embryonate in solutions of formalin, H2So4 and HCL","Eggs are resistant to usual methods of chemical water purification, removed by Filtration and killed by boiling","Eggs embryonate but do not hatch until ingested by man","A+B","B+C"],a:"B+C"},
+        {n:6,t:'m',q:"Morphology adult worm of ascariasis include:",o:["3 large rounded lip","Length 15-35cm","Female is smaller than male","A+B","A+B+C"],a:"A+B"},
+        {n:7,t:'m',q:"Causes of ascariasis include:",o:["Human feces are used for fertilizer","Unwashed fruits or vegetables","From person to person","Contact with soil mixed with human feces that contain ascariasis eggs or infected water","A+B+C+D"],a:"A+B+C+D"},
+        {n:8,t:'m',q:"Risk factors of ascariasis include:",o:["Use of human feces for fertilizer","Living in or visiting a warm climate","Lack of sanitation infrastructure","A+B","A+B+C"],a:"A+B+C"},
+        {n:9,t:'m',q:"Mode of transmission of ascariasis by:",o:["Intermediate host (Animal)","Definitive host (Human and Pig)","Ingestion of water or food contaminated with A. lumbricoides eggs","A+B","B+C"],a:"B+C"},
+        {n:10,t:'m',q:"Incubation period of ascariasis include:",o:["Average: 2 days","Average: 2 weeks","Average: 2 months","Average: 2 years","Others"],a:"Average: 2 months"},
+        {n:11,t:'m',q:"Symptoms of ascariasis include:",o:["Fever","Breathing difficulty","Urticaria","A+B","A+B+C"],a:"A+B+C"},
+        {n:12,t:'m',q:"Symptoms of ascariasis with adult parasite in the intestine include:",o:["Heavy worms load can’t affect retard physical and mental development","Abdominal discomfort (Nausea)","Asymptomatic (85%)","A+B","B+C"],a:"B+C"},
+        {n:13,t:'m',q:"Symptoms of ascariasis with worm migration include:",o:["Peritonitis ,Appendicitis","Severe inflammatory reaction","Dermatological and allergic reactions can’t occur","A+B","A+B+C"],a:"A+B"},
+        {n:14,t:'m',q:"Laboratory diagnosis of ascariasis by:",o:["Stool microscopy","Microscopic identification","Eosinophilia","A+B","A+B+C"],a:"A+B+C"},
+        {n:15,t:'m',q:"Differential diagnosis of ascariasis include:",o:["Salmonella infection","Appendicitis","Acute Cholangitis","Small-Bowel Obstruction","A+B+C+D"],a:"A+B+C+D"},
+        {n:16,t:'m',q:"Treatment of ascariasis include:",o:["Pyrantel pamoate","Ampicilline","Rifampicine","Cephalosporine","A+B+C+D"],a:"Pyrantel pamoate"},
+        {n:17,t:'m',q:"Complications of ascariasis include:",o:["Pancreatitis","Digestive perforation","liver abscess","Lung cancer","A+B+C+D"],a:"Pancreatitis"},
+        {n:18,t:'m',q:"Prevention of ascariasis include:",o:["Wash hands with soap and water before handling food","Good hygiene","Dispose of diapers properly","A+B","A+B+C"],a:"A+B+C"},
+        {n:19,t:'m',q:"Ancylostomiasis: Geographic distribution of ancylostomiasis include:",o:["Worldwide","Mostly in areas with moist","Temperate climate","A+B","A+B+C"],a:"A+B"},
+        {n:20,t:'m',q:"In the world people ancylostomiasis infected are estimated that:",o:["Less than 1300 million people","More than 1300 million people","Less than 130 million people","More than 130 million people","Others"],a:"More than 1300 million people"},
+        {n:21,t:'m',q:"Morphology adult worms of ankylostoma hookworms include:",o:["Female worms measure about 10 to 13 mm x 0.6 mm","Males Worms measure about 8 to 10 mm x 0.5 mm","The worms attach to the intestinal of the jejunum and duodenum by their mouth parts","A+B","A+B+C"],a:"A+B+C"},
+        {n:22,t:'m',q:"Morphology eggs of ankylostoma hookworms include:",o:["Measure about 6 µm x 4 µm","Are oval and colorless","Are spherical and discolors","Measure about 60 µm x 40 µm","B+D"],a:"B+D"},
+        {n:23,t:'m',q:"Host definitive of ankylostoma hookworms include:",o:["Human","Animal","Bird","A+B","A+B+C"],a:"Human"},
+        {n:24,t:'m',q:"Life cycle of ancylostomiasis include:",o:["Eggs are passed in the stool, and under favorable conditions","Adult worms live in the lumen of the small intestine","These larvae take seven to ten days to become infective (filariform larvae)","A+B","A+B+C"],a:"A+B+C"},
+        {n:25,t:'m',q:"Causes of ancylostomiasis include:",o:["Persons walking barefoot over contaminated soil","Good sanitation","Human feces are not used for fertilizer","Persons walking boot over non contaminated soil","Others"],a:"Persons walking barefoot over contaminated soil"},
+        {n:26,t:'m',q:"Risk factors of ancylostomiasis include:",o:["Inadequate sanitation","Optimal conditions for eggs","Low socioeconomic status and low education","Poor waste management systems","A+B+C+D"],a:"A+B+C+D"},
+        {n:27,t:'m',q:"Transmission of ancylostomiasis include:",o:["From person to person","Through penetration of the skin whereas","Percutaneously","A+B","B+C"],a:"B+C"},
+        {n:28,t:'m',q:"Incubation period of ancylostomiasis include:",o:["Between a few weeks to many months","Between a few days to many weeks","Dependent on the number of hookworm parasites with which an individual is infected","A+B","A+C"],a:"A+C"},
+        {n:29,t:'m',q:"Symptoms of ancylostomiasis include:",o:["Intestinal bleeding","Itching","Malnutrition","A+B","A+B+C"],a:"A+B+C"},
+        {n:30,t:'m',q:"Diagnosis of ancylostomiasis include:",o:["Biopsie of lung","Blood culture","Stool culture","Microscopic examination of stool","A+B+C+D"],a:"Microscopic examination of stool"},
+        {n:31,t:'m',q:"Differential diagnosis of ancylostomiasis include:",o:["Amibiasis","Giardiasis","Strongyloidiasis","A+B","B+C"],a:"B+C"},
+        {n:32,t:'m',q:"Treatment of ancylostomiasis include:",o:["Pyrantel pamoate","Albendazole","Mebendazole","Levamisole","A+B+C+D"],a:"A+B+C+D"},
+        {n:33,t:'m',q:"Complications of ancylostomiasis include:",o:["Intestines, metabolism syndromes","Rare complications","Cardiovascular system and respiratory tract","A+B","A+B+C"],a:"A+B+C"}
+        ];
+
+        let quizDataPart2 = [
+        {n:34,t:'m',q:"Prognosis of ancylostomiasis include:",o:["With lack of treatment, the prognosis is excellent","Severe anemia retards childhood development and intellectual performance","No need to treat","All patients are dark","A+B+C+D"],a:"Severe anemia retards childhood development and intellectual performance"},
+        {n:35,t:'m',q:"Prevention of ancylostomiasis include:",o:["Washing hands after handling or eating food","Wearing covered footwear in areas where the disease is endemic","Washing hands after going to the toilet","A+B","B+C"],a:"B+C"},
+        {n:36,t:'m',q:"Strongyloidiasis is a human parasitic disease caused by the:",o:["Nematode (roundworm)","Cestode","Arthropode","Protozoaire","Others"],a:"Nematode (roundworm)"},
+        {n:37,t:'m',q:"Geographic distribution of Strongyloidiasis:",o:["Tropical regions of Africa, Asia and South America","Occidental regions of Africa, Asia and South America","Developed country","In the world","In Africa only"],a:"Tropical regions of Africa, Asia and South America"},
+        {n:38,t:'m',q:"Morphology the trophozoite of Strongyloidiasis include:",o:["Biggest parasites to infect humans","Rhabditiform larvae are shorter and slower","Buccal cavity is multiple","Males are thought to be parasitic","Others"],a:"Rhabditiform larvae are shorter and slower"},
+        {n:39,t:'m',q:"Morphology the Eggs of Strongyloidiasis include:",o:["The egg measures 60-80μm × 40-60μm","They are thick-shelled and spherical","They contain larva ready to hatch","A+B","A+B+C"],a:"They contain larva ready to hatch"},
+        {n:40,t:'m',q:"Host of Strongyloidiasis include:",o:["Humans","Dogs","Cats","A+B","A+B+C"],a:"A+B+C"},
+        {n:41,t:'m',q:"Invasive stage of Strongyloidiasis includes:",o:["Tissue destruction","Skin penetration","During cycle","A+B","A+B+C"],a:"Skin penetration"},
+        {n:42,t:'m',q:"Risk factors of Strongyloidiasis include :",o:["Live in or travel to city areas","Immuno competent","Travel to or live in South America, Africa, or other tropical regions","Practice good personal hygiene","Others"],a:"Travel to or live in South America, Africa, or other tropical regions"},
+        {n:43,t:'m',q:"Transmission of Strongyloidiasis include:",o:["Sexual contact","Auto-infection","Feces","Skin contact","A+B+C+D"],a:"A+B+C+D"},
+        {n:44,t:'m',q:"Incubation period of Strongyloidiasis include:",o:["4 - 10days","10 - 20days","1 - 5 weeks","14 - 30days","30 - 60days"],a:"14 - 30days"},
+        {n:45,t:'m',q:"Symptoms of Strongyloidiasis include:",o:["Lower abdominal pain","Headache","Diarrhea or alternating diarrhea and constipation","Fever","A+B+C+D"],a:"Diarrhea or alternating diarrhea and constipation"},
+        {n:46,t:'m',q:"Diagnosis of Strongyloidiasis base on microscopic examination of:",o:["Cerebrospinal fluid","Sputum","Stool","A+B","A+B+C"],a:"A+B+C"},
+        {n:47,t:'m',q:"Find 1 of all is not differential diagnosis of Strongyloidiasis include:",o:["Cholera","Acute Respiratory Distress Syndrome","Septicemia","Chronic Obstructive Pulmonary Disease","Inflammatory Bowel Disease"],a:"Septicemia"},
+        {n:48,t:'m',q:"Treatment of Strongyloidiasis include:",o:["Thiabendazole","Niclosamide","Ivermectin","A+B","A+C"],a:"A+C"},
+        {n:49,t:'m',q:"Find 1 of all is not complications and sequelae of Strongyloidiasis include:",o:["Malabsorption syndrome","Visceral larva migrans","Pneumonia","Bronchospasm","Gastrointestinal bleeding"],a:"Pneumonia"},
+        {n:50,t:'m',q:"Prevention of Strongyloidiasis includes:",o:["Use of footwear in endemic areas","Treat all not infected dogs, cats, and monkeys that are in contact with people","Washing hand after eating","A+B","A+B+C"],a:"Use of footwear in endemic areas"},
+        {n:51,t:'m',q:"Trichocephaliasis is a parasitic disease caused by infection of the:",o:["Trichinella","Trichuris trichiura","Schistosoma","Giardia lamblia","Clonorchis sinensis"],a:"Trichuris trichiura"},
+        {n:52,t:'m',q:"Morphology of adults male and female Trichocephaliasis include:",o:["Females: 3 to 5 mm long","Females: 30 to 50 mm long","Males: 30 to 45 mm long","A+C","B+C"],a:"B+C"},
+        {n:53,t:'m',q:"Causes of Trichocephaliasis include:",o:["Ingestion of soil containing the eggs of the roundworm","Ingestion of vegetables may also contain larvae of T. trichiura","Ingestion of water containing the larvae of the roundworm","Direct contact","Others"],a:"Ingestion of soil containing the eggs of the roundworm"},
+        {n:54,t:'m',q:"Symptoms of Trichocephaliasis include:",o:["Fever","Headache","Anemia","Vomiting","Nausea"],a:"Anemia"},
+        {n:55,t:'m',q:"Complications of Trichocephaliasis include:",o:["Growth and developmental early in children","Peritonitis","Appendicitis","Rectal prolapsed","Others"],a:"Rectal prolapsed"},
+        {n:56,t:'m',q:"Prevention of Trichocephaliasis include:",o:["Washing of food that may have been contaminated with egg-containing soil","Hand washing before food handling","Improved facilities for disposal of faeces","A+B","A+B+C"],a:"A+B+C"},
+        {n:57,t:'m',q:"Trichinellosis is a disease caused by the parasite:",o:["Entamoeba Histolytica","Ankylostoma","Clonorchis sinensis","Fasciolopsiasis","Others"],a:"Others"},
+        {n:58,t:'m',q:"Morphology of Trichinella spiralis male and female include:",o:["Males of T. spiralis measure 4 to 6 mm long","The females of T. spiralis are about 3 time the size of the males","Males of T. spiralis measure 1.4 to 1.6 mm long","A+B","A+B+C"],a:"Males of T. spiralis measure 1.4 to 1.6 mm long"},
+        {n:59,t:'m',q:"Causes of Trichinellosis include:",o:["Eaten meat containing the trichinellosis cysts","Eaten meat containing the trichinellosis trophozoite","Eat fruit and fresh vegetable","A+B","A+B+C"],a:"Eaten meat containing the trichinellosis cysts"},
+        {n:60,t:'m',q:"Transmission of Trichinellosis includes:",o:["Direct contact","Consumption of raw or undercooked meat of uninfected animals","Consumption of cooked meat of infected animals","Consumption of unsafe water","Others"],a:"Others"},
+        {n:61,t:'m',q:"Incubation period of Trichinellosis include:",o:["1 - 2 days","2 - 4 days","5 - 10 days","6 - 12 days","8 - 15 days"],a:"8 - 15 days"},
+        {n:62,t:'m',q:"Symptoms of Trichinellosis for first stage include:",o:["Headache","Eyes swelling","Itchy skin or rash","Abdominal pain","Chill"],a:"Abdominal pain"},
+        {n:63,t:'m',q:"Symptoms of Trichinellosis for Second stage include:",o:["Headache","Eyes swelling","Itchy skin or rash","A+B","A+B+C"],a:"A+B+C"},
+        {n:64,t:'m',q:"Diagnosis of Trichinellosis includes:",o:["Muscle biopsy","Blood test","Stool examination","A+B","A+B+C"],a:"A+B+C"},
+        {n:65,t:'m',q:"Differential diagnosis of Trichinellosis includes:",o:["Food Poisoning","Myopathies","Visceral Larva Migrans","Toxocariasis","A+B+C+D"],a:"A+B+C+D"},
+        {n:66,t:'m',q:"Complications of Trichinellosis includes:",o:["Myocarditis","Encephalitis","Meningitis","Pneumonia","A+B+C+D"],a:"A+B+C+D"}
+        ];
+
+        let quizDataPart3 = [
+        {n:67,t:'m',q:"Prevention of Trichinellosis includes:",o:["Improve food safety for consumers","Good heating","Good freezing of raw meat","A+B","A+B+C"],a:"A+B+C"},
+        {n:68,t:'m',q:"Schistosomiasis: Schistosomiasis is a parasitic disease caused by:",o:["Cestode","Trematode","Protozoaire","Arthropode","All of above"],a:"Trematode"},
+        {n:69,t:'m',q:"Epidemiology of Schistosomiasis include:",o:["Globally, 2,000 deaths are attributed to schistosomiasis annually","Affects almost 24 million people worldwid","The infection is prevalent in tropical and sub-tropical areas","In communities with potable water and adequate sanitation","Others"],a:"The infection is prevalent in tropical and sub-tropical areas"},
+        {n:70,t:'m',q:"Morphology of adult Schistosomiasis include:",o:["Males don’t have many small nodules","Adult males are 10 to 15 mm long","Adult males are 20 to 30 mm long","Females are shorter than male","Both sexes have 3 suckers"],a:"Adult males are 10 to 15 mm long"},
+        {n:71,t:'m',q:"Morphology of Eggs Schistosomiasis include:",o:["The shells of the eggs are dark","110-170 µm long by 40 to 70 mm wide","The shells of the eggs contain miracidia","A+B","B+C"],a:"B+C"},
+        {n:72,t:'m',q:"Risk factors of Schistosomiasis include:",o:["Live in areas where schistosomiasis occurs","Travel to areas where no transmission of schistosomiasis","Skin in contact with freshwater from canals","A+C","A+B+C"],a:"A+C"},
+        {n:73,t:'m',q:"Transmission of schistosomiasis parasites by:",o:["The parasites can penetrate the skin of persons who are wading, swimming etc","Drinking unsafe water","Eating fresh fruit","Direct contact with the patients","A+B+C+D"],a:"The parasites can penetrate the skin of persons who are wading, swimming etc"},
+        {n:74,t:'m',q:"Incubation period of schistosomiasis include usually:",o:["4-10 days","4-21 days","14-24 days","14-84 days","14-100 days"],a:"14-84 days"},
+        {n:75,t:'m',q:"Early symptoms of schistosomiasis include:",o:["General sense of feeling well","Nausea, Vomiting","Abdominal pain","Headache","A+B+C+D"],a:"Abdominal pain"},
+        {n:76,t:'m',q:"Find 1 of all is not late symptoms or chronic schistosomiasis:",o:["Blood in your urine","Cystitis","Headaches","Dizziness","Fever 38C"],a:"Fever 38C"},
+        {n:77,t:'m',q:"Diagnosis of schistosomiasis include:",o:["Blood test","Present eggs of schistosomia in stool or urine sample","Symptoms of schistosomiasis","A+B","A+B+C"],a:"A+B+C"},
+        {n:78,t:'m',q:"Differential diagnosis of schistosomiasis includes:",o:["Peptic ulcer disease","Pancreatitis","Pneumonia","A+B","A+B+C"],a:"A+B"},
+        {n:79,t:'m',q:"Complications of schistosomiasis includes:",o:["Carcinoma of bladder","Chronic kidney disease","Gastrointestinal obstruction","Hydro nephrosis","A+B+C+D"],a:"A+B+C+D"},
+        {n:80,t:'m',q:"Prognosis of schistosomiasis includes:",o:["Early disease usually not improves with treatment","Acute schistosomiasis is associated with a mortality rate of up to 25%","Can lead to renal failure due to obstructive uropathy, pyelonephritis","B+C","A+B+C"],a:"B+C"},
+        {n:81,t:'m',q:"Prevention of schistosomiasis includes:",o:["Boil or filter water before drinking","Avoid paddling, swimming and washing in fresh water","Take waterproof trousers and boots if you need to cross a stream or river","A+B","A+B+C"],a:"A+B+C"},
+        {n:82,t:'m',q:"Clonorchiasis senensis: Geographic distribution of clonorchiasis senensis include:",o:["Vietnam","Japan","Cambodia","A+B","A+B+C"],a:"A+B"},
+        {n:83,t:'m',q:"Morphology of adult worm of clonorchiasis senensis include:",o:["Elongated worm","Size 10-15 X3-5mm","4 suckers","A+B","A+B+C"],a:"A+B"},
+        {n:84,t:'m',q:"Morphology of eggs worm of clonorchiasis senensis include:",o:["Cylindrical","Big","Peculated at 2 ends","Yellowish color","Big knob at opposite end"],a:"Yellowish color"},
+        {n:85,t:'m',q:"Definitive hosts of clonorchiasis senensis include:",o:["Camels","Humans","Rats","Cats","A+B+C+D"],a:"A+B+C+D"},
+        {n:86,t:'m',q:"Intermediate hosts of clonorchiasis senensis include:",o:["Fish","Snails","Rats","A+B","A+B+C"],a:"A+B"},
+        {n:87,t:'m',q:"Causes of clonorchiasis senensis include:",o:["Eating freshwater fish containing the fluke cyst","Eating freshwater fish containing the fluke larvae","Eating vegetable and fruit non clean","A+B","A+B+C"],a:"A+B"},
+        {n:88,t:'m',q:"Risk factors of clonorchiasis senensis include:",o:["Living far freshwater water bodies","People who eat freshwater fish that is good cooked","People who eat freshwater fish that is raw","A+B","A+B+C"],a:"People who eat freshwater fish that is raw"},
+        {n:89,t:'m',q:"Route of transmission of clonorchiasis senensis include:",o:["Eating raw fresh water fish which are previously infected","Eating inadequately cooked fresh shrimp which are previously infected","Eating adequately cooked fresh shrimp which are previously infected","A+B","A+C"],a:"A+B"},
+        {n:90,t:'m',q:"Incubation period of clonorchiasis senensis include:",o:["1-2 weeks","1-2 months","2-4 months","1-2 days","1-2 years"],a:"1-2 months"},
+        {n:91,t:'m',q:"Acute symptoms of clonorchiasis senensis include:",o:["High fever","Slight jaundice","Hepathomegaly","A+B","A+B+C"],a:"A+B+C"},
+        {n:92,t:'m',q:"Diagnosis of clonorchiasis senensis base on include:",o:["Gastro intestinal symptoms (Hepatomegaly, cholangoitis etc…)","Discovery of characteristic eggs in feces","History of eating raw or inadequately cooked fresh water fish and shrimp","A+B","A+B+C"],a:"A+B+C"},
+        {n:93,t:'m',q:"Differential diagnosis of clonorchiasis senensis include:",o:["Bacterial hepatitis","Amebiasis","Lung cancer","Fasciolopsiasis","Bronchitis"],a:"Fasciolopsiasis"},
+        {n:94,t:'m',q:"Treatment of clonorchiasis senensis include:",o:["Metronidazol","Praziquantel","Tetracycline","Levamisole","A+B+C+D"],a:"Praziquantel"},
+        {n:95,t:'m',q:"Complication of clonorchiasis senensis include:",o:["Cholestatis cirrhosis","Pancreatitis","Lung abscess","A+B","A+B+C"],a:"A+B"},
+        {n:96,t:'m',q:"Prognosis of clonorchiasis senensis include:",o:["The Prognosis of clonorchiasis senensis is not good","Late diagnosis may prevent long-term complications of Clonorchiasis such as cholangiocarcinoma","A proper and timely diagnosis and treatment can lead to a good prognosis","A+B","B+C"],a:"A proper and timely diagnosis and treatment can lead to a good prognosis"},
+        {n:97,t:'m',q:"Prevention of clonorchiasis senensis include:",o:["Sanitary disposal of the excreta","Vaccination","Immunization","A+B","A+B+C"],a:"Sanitary disposal of the excreta"},
+        {n:98,t:'m',q:"Fasciola hepatica: Causes of fasciola hepatica by Eating include:",o:["fluke-infested","Fresh-water raw","Undercooked fish","A+B","A+B+C"],a:"A+B+C"},
+        {n:99,t:'m',q:"Morphology of fasciola hepatica. Form of adult fluke includes:",o:["Flat leaf like body","30-50mm long","6-10mm long","10-20mm large","20-30mm large"],a:"Flat leaf like body"}
+        ];
+
+        let quizDataPart4 = [
+        {n:100,t:'m',q:"Morphology of fasciola hepatica. Form of eggs includes:",o:["Peculated and unembryonated contains a big unsegmented ovum","Red color","Spherical","Eggs can further develop only in soil","A+B+C+D"],a:"Peculated and unembryonated contains a big unsegmented ovum"},
+        {n:101,t:'m',q:"Definitive host of fasciola hepatica includes:",o:["Snail","Sheep","Cattle","A+B","B+C"],a:"B+C"},
+        {n:102,t:'m',q:"Intermediate host of fasciola hepatica include:",o:["Sheep","Snail","Cattle","Birth","Others"],a:"Snail"},
+        {n:103,t:'m',q:"The life cycle of fasciola hepatica start when:",o:["A female lays eggs in the liver of an infected human","Immature eggs are discharged in the biliary ducts and taken out in the feces","If landed in water, the eggs become non embryonated and develop larvae called miracidia","A+B","A+B+C"],a:"A+B"},
+        {n:104,t:'m',q:"Progress of infection to fasciola hepatica include:",o:["Ex-cyst in duodenum","Ingestion metacercariae","Enters peritoneal cavity","A+B","A+B+C"],a:"A+B+C"},
+        {n:105,t:'m',q:"Transmission of fasciola hepatica by:",o:["Ingestion of metacercariae encysted on aquatic vegetation","Contact of metacercariae encysted on aquatic vegetation","Animal mature is used as primary fertilizer for cultivation of watercress","A+B","A+C"],a:"A+C"},
+        {n:106,t:'m',q:"Risk factors of fasciola hepatica include:",o:["Eating undercooked sheep or goat livers that contain immature forms of the parasite","Ingesting non contaminated water","Drinking it or by eating vegetables that were washed or irrigated with non contaminated water","A+B","A+B+C"],a:"Eating undercooked sheep or goat livers that contain immature forms of the parasite"},
+        {n:107,t:'m',q:"Symptoms of fasciola hepatica include:",o:["Hepatic tenderness","Nausea","Prolonged high fever","A+B","A+B+C"],a:"A+B+C"},
+        {n:108,t:'m',q:"Diagnosis of fasciola hepatica base on:",o:["Stool examination","LCR examination","Blood examination","Blood culture","Others"],a:"Stool examination"},
+        {n:109,t:'m',q:"Treatment of fasciola hepatica include:",o:["Bithional","Triclabendazole","Surgery","A+B","A+B+C"],a:"A+B+C"},
+        {n:110,t:'m',q:"Prevention of fasciola hepatica include:",o:["Health education","Moluskicide","Use medecine for prevention","A+B","A+B+C"],a:"A+B"},
+        {n:111,t:'m',q:"Fasciolopsis buski: Fasciolopsis buski is classify the group of:",o:["Cestodes","Nematodes","Trematodes","Protozoose","Others"],a:"Trematodes"},
+        {n:112,t:'m',q:"Geographic distribution of Fasciolopsis buski found in:",o:["Worldwide","Developed countries","Rural southeast Asia","Europe","Northeast Asia"],a:"Rural southeast Asia"},
+        {n:113,t:'m',q:"Epidemiology of Fasciolopsis buski include:",o:["10 million individuals worldwide","10 million individuals worldwide (duplicate)","The high incidence of infection was prevalent in male and children ages 2-5 years of age","The high incidence of infection was prevalent in females and children ages 10–14 years of age","Males are higher than female"],a:"The high incidence of infection was prevalent in females and children ages 10–14 years of age"},
+        {n:114,t:'m',q:"Morphology adult worms of Fasciolopsis buski include:",o:["Smallest fluke to infect humans","Non hermaphrodite","About 10–15 mm long","Non undulating","Leaf-shaped"],a:"Leaf-shaped"},
+        {n:115,t:'m',q:"Morphology eggs of Fasciolopsis buski include:",o:["Small","Thick-shelled","Thin-shelled","13–16 micrometers (µm) long","7–9 µm wide"],a:"Thin-shelled"},
+        {n:116,t:'m',q:"Host of Fasciolopsis buski includes:",o:["Pigs","Humans","Dogs","Snail","A+B+C+D"],a:"A+B+C+D"},
+        {n:117,t:'m',q:"Causes of Fasciolopsis buski include:",o:["Direct transmission (direct contact)","Eat raw aquatic plants","Undercooked aquatic plants","A+B","B+C"],a:"B+C"},
+        {n:118,t:'m',q:"Risk factors of Fasciolopsis buski include:",o:["Eating raw aquatic plants","School-age children","Lack of sufficient food inspection and sanitation","A+B","A+B+C"],a:"A+B+C"},
+        {n:119,t:'m',q:"Incubation period of Fasciolopsis buski include:",o:["1-2 days","1-2 weeks","2 -4 weeks","2 -4 months","Others"],a:"Others"},
+        {n:120,t:'m',q:"Symptoms of fasciolopsis buski: heavy infections can include:",o:["Obstruction of the bowel","Anemia","Swelling of the skin","A+B","A+B+C"],a:"A+B+C"},
+        {n:121,t:'m',q:"Diagnosis of fasciolopsis buski can include:",o:["Microscopic examination of stool","Travel history","Symptoms of fasciolopsis buski","A+B","A+B+C"],a:"A+B+C"},
+        {n:122,t:'m',q:"Differential diagnosis of fasciolopsis buski can include:",o:["Chronic gastritis","Colite","Lung cancer","Appendicitis","Hepatitis"],a:"Chronic gastritis"},
+        {n:123,t:'m',q:"Complications of fasciolopsis buski can include:",o:["Intestinal perforation","Intestinal obstruction","Stomach perforation","Cancer of stomach","A+B"],a:"A+B"},
+        {n:124,t:'m',q:"Prevention of fasciolopsis buski include:",o:["Drinking water can be filtered or boiled","Pig feces should be used as a fertilizer in agriculture","Human feces should be used as a fertilizer in agriculture","Freezing vegetables at 20°C for a few days","A+B+C+D"],a:"Drinking water can be filtered or boiled"},
+        {n:125,t:'m',q:"Diphyllobothrium latum: The segments of the adult worm Diphyllobothrium latum is composed of:",o:["Scolex","Neck","Lower body","A+B","A+B+C"],a:"A+B+C"},
+        {n:126,t:'m',q:"Diphyllobothrium latum is the:",o:["Smallest tape worm","Biggest tape worm","Longest tape worm","Medium tape worm","Others"],a:"Longest tape worm"},
+        {n:127,t:'m',q:"Transmission of Diphyllobothrium latum is:",o:["Contact person to person","Drinking and eating unsafe water and fruit","Eating raw or undercooking freshwater fish","A+B","A+B+C"],a:"Eating raw or undercooking freshwater fish"},
+        {n:128,t:'m',q:"Complication of Diphyllobothrium latum : Untreated, fish tapeworm infection may cause:",o:["Intestinal blockage","Megaloblastic anemia","Peritonitis","A+B","A+B+C"],a:"A+B"},
+        {n:129,t:'m',q:"Taeniasis saginata and Taeniasis Solium: Taeniasis saginata is a human’s parasitic infection caused by the tapeworm Species",o:["Beef tapeworm","Pork tapeworm","Rodent tapeworm","Dog tapeworm","Others"],a:"Beef tapeworm"},
+        {n:130,t:'m',q:"Taeniasis Solium is a humans parasitic infection caused by the tapeworm species:",o:["Beef tapeworm","Pork tapeworm","Dog tapeworm","Rodent tapeworm","Others"],a:"Pork tapeworm"},
+        {n:131,t:'m',q:"Geographic distribution of Taeniasis saginata include:",o:["Worldwide","Latin America","Africa","A+B","A+B+C"],a:"A+B+C"},
+        {n:132,t:'m',q:"Geographic distribution of Taeniasis Solium include:",o:["Latin America","Asia","Africa","Central and South America (especially Mexico, Venezuela, and Chile)","A+B+C"],a:"Central and South America (especially Mexico, Venezuela, and Chile)"}
+        ];
+
+        let quizDataPart5 = [
+        {n:133,t:'m',q:"Morphology of Taeniasis saginata include:",o:["Scolex is globular","Scolex is quadrate","700 to 1000 proglottids","100,000 eggs per proglottid","Thin and transparent"],a:"Scolex is globular"},
+        {n:134,t:'m',q:"Morphology of Taeniasis solium include:",o:["Scolex is quadrate","100,000 eggs per proglottid","Thin and transparent","A+B","A+B+C"],a:"A+B+C"},
+        {n:135,t:'m',q:"Hote of Taeniasis saginata include:",o:["Humans","Monkeys","Buffalo","A+B","A+B+C"],a:"A+B"},
+        {n:136,t:'m',q:"Hote of Taeniasis solium include:",o:["Giraffes","Monkeys","Buffalo","Rats","Dogs, cats are very rarely"],a:"Dogs, cats are very rarely"},
+        {n:137,t:'m',q:"Causes of Taeniasis saginata include:",o:["Eating raw or undercooked beef","Eating raw or undercooked pork","Contact with the stool","A+C","B+C"],a:"A+C"},
+        {n:138,t:'m',q:"Causes of Taeniasis solium include:",o:["Eating raw or undercooked beef","Eating raw or undercooked pork","Contact with the stool","A+C","B+C"],a:"B+C"},
+        {n:139,t:'m',q:"Transmission of Taeniasis saginata includes:",o:["Eating of undercooked beef containing the cysticerci","Eating raw or insufficiently cooked measly pork containing the cysticerci","Indirect contact","A+C","B+C"],a:"Eating of undercooked beef containing the cysticerci"},
+        {n:140,t:'m',q:"Transmission of Taeniasis solium include:",o:["Eating of undercooked beef containing the cysticerci","Eating raw or insufficiently cooked measly pork containing the cysticerci","Indirect contact","A+C","B+C"],a:"Eating raw or insufficiently cooked measly pork containing the cysticerci"},
+        {n:141,t:'m',q:"Incubation period of Taeniasis saginata include:",o:["2 to 3 days","2 to 3 weeks","4 to 5 weeks","2 to 3 months","4 to 6 months"],a:"2 to 3 months"},
+        {n:142,t:'m',q:"Symptoms of Taeniasis solium include:",o:["Abdominal pain","Constipation chronic","Loss of appetite","A+B","A+B+C"],a:"A+B+C"},
+        {n:143,t:'m',q:"Medical treatment of Taeniasis solium includes:",o:["Mebendazol","Metronidazol","Niclosamide","Rifampicine","A+B+C+D"],a:"Niclosamide"},
+        {n:144,t:'m',q:"Complications of Taeniasis saginata include:",o:["Intestinal obstruction","Cholecystitis","Meningitis","Pneumonia","Cystitis"],a:"Intestinal obstruction"},
+        {n:145,t:'m',q:"Prevention of Taeniasis saginata includes:",o:["Good hygiene and hand washing before using the toilet","Avoiding raw meat and cooking meat well enough","Freezing meats to -5° for 4 days","B+C","A+B+C"],a:"B+C"},
+        {n:146,t:'m',q:"Hymenolepis nana or dwarf tapeworm: Hymenolepis nana or dwarf tapeworm is:",o:["Big tapeworm in humans","Small tapeworm in humans","Sometimes found in great numbers in the intestine","A+B","B+C"],a:"B+C"},
+        {n:147,t:'m',q:"Geographic distribution of Hymenolepis nana include:",o:["Frequent in hot countries","Worldwide","Persons living in areas where sanitation and personal hygiene is adequate","A+B","A+B+C"],a:"A+B"},
+        {n:148,t:'m',q:"Infection of Hymenolepis nana is most common in:",o:["Adults","Children aged 4-10 years","Children aged 2-4 years","Children aged 8-12 years","Immuno competent"],a:"Children aged 4-10 years"},
+        {n:149,t:'m',q:"Adult worm of Hymenolepis nana is:",o:["100-200 proglottids","10-45mm long","0.5- 1mm wide","B+C","A+B+C"],a:"A+B+C"},
+        {n:150,t:'m',q:"Definitive host of Hymenolepis nana includes:",o:["Humans","Beetles","Fleas","A+B","A+B+C"],a:"Humans"},
+        {n:151,t:'m',q:"Intermediate host of Hymenolepis nana include:",o:["Rodent","Humans","Beetles","A+B","A+B+C"],a:"Beetles"},
+        {n:152,t:'m',q:"Causes of Hymenolepis nana include:",o:["Animals become non infected when they eat","Humans become infected when they eat","Material non contaminated by insects","A+B","A+B+C"],a:"Humans become infected when they eat"},
+        {n:153,t:'m',q:"Risk factors of Hymenolepis nana include:",o:["Contact with environments contaminated with human feces","Consumption of untreated water","Presence of proper sanitation","A+B","A+B+C"],a:"A+B"},
+        {n:154,t:'m',q:"Hymenolepis nana or dwarf tapeworm is a :",o:["Big tapeworm in animal","Small tapeworm in animal","Big tapeworm in humans","Small tapeworm in humans","Medium tapeworm in humans"],a:"Small tapeworm in humans"},
+        {n:155,t:'m',q:"Epidemiology of Hymenolepis nana :",o:["Estimated rates of infection in various regions range from 0.1-58%","It is estimated to have 50-75 million carriers of H. nana","Infection is most common in children aged 4-10 years","A+B","A+B+C"],a:"A+B+C"},
+        {n:156,t:'m',q:"Morphology adult worm of Hymenolepis nana :",o:["5-10mm long","Neck is short","10-20 proglottids","0.5- 1mm wide","Others"],a:"0.5- 1mm wide"},
+        {n:157,t:'m',q:"Definitive host of Hymenolepis nana:",o:["Beetles and Fleas","Rodent","Humans","A+B","B+C"],a:"B+C"},
+        {n:158,t:'m',q:"Intermediate host of Hymenolepis nana :",o:["Fleas","Beetles","Rodent","A+B","A+B+C"],a:"A+B"},
+        {n:159,t:'m',q:"Life cycle of Hymenolepis nana :",o:["Ingestion of H. nana eggs, primarily from human stool","The eggs hatch in the stomach or small intestine, and the liberated larvae, or oncospheres, penetrate the villus in the upper small intestine","The adult worms mature within several weeks","Accidental ingestion of the insect intermediate host can result in development of the adult worms","A+B+C+D"],a:"A+B+C+D"},
+        {n:160,t:'m',q:"All of answers are true exclude one is false answer the risk factors of Hymenolepis Nana, Find it:",o:["Contact with environments contaminated with human feces","Absence of proper sanitation","Adequate treatment of excreta and waste","Consumption of untreated water","Others"],a:"Adequate treatment of excreta and waste"},
+        {n:161,t:'m',q:"Transmission of Hymenolepis Nana include:",o:["Ingestion of food contaminated with feces (human or rodent) Fecal/oral contact","Ingestion of infected beetle","Touching your mouth with contaminated fingers","A+B","A+B+C"],a:"A+B+C"},
+        {n:162,t:'m',q:"Incubation period of Hymenolepis Nana include:",o:["1 - 2weeks","2 - 3weeks","3 - 4weeks","2 - 4weeks","4 - 5weeks"],a:"2 - 4weeks"},
+        {n:163,t:'m',q:"Find the false answer of Hymenolepis Nana include:",o:["Loss of appetite and loss of weight","Vomiting","Head ach","Gastrointestinal pain","Diarrhoea"],a:"Head ach"},
+        {n:164,t:'m',q:"Diagnosis of Hymenolepis Nana include:",o:["CT scan","Detection of eggs in stool","Stool culture","Scott test of Graham","Rx of lung"],a:"Detection of eggs in stool"},
+        {n:165,t:'m',q:"Differential diagnosis of Hymenolepis Nana include:",o:["Colitis","Ascariasis","Appendicitis","A+B","A+B+C"],a:"A+B"}
+        ];
+
+        let quizDataPart6 = [
+        {n:166,t:'m',q:"Medical treatment of Hymenolepis Nana include:",o:["Praziquantel","Niclosamide","Albendazole","A+B","A+B+C"],a:"A+B+C"},
+        {n:167,t:'m',q:"Prevention of Hymenolepis Nana include:",o:["Destruction of rats and mice","Good hygiene","Treating of infected persons","Destruction of insect","A+B+C"],a:"A+B+C"},
+        {n:168,t:'m',q:"Echinococcus granulosus: Definition of echinococcus granulosus: Echinococcus granulosus, also called hydatid worm belong to class:",o:["Cestode","Nematode","Bacteria","Virus","Others"],a:"Cestode"},
+        {n:169,t:'m',q:"Reservoirs of echinococcus granulosus (definitive hosts):",o:["Sheep","Deer","Goats","Horses","Dogs"],a:"Dogs"},
+        {n:170,t:'m',q:"Reservoirs of echinococcus granulosus (Intermediate hosts):",o:["Wolves","Cats","Goats","A+B","A+B+C"],a:"Goats"},
+        {n:171,t:'m',q:"Differential diagnosis of echinococcus granulosus",o:["Brain obstruction","Cholangitis","Biliary obstruction","A+B","A+B+C"],a:"A+B+C"},
+        {n:172,t:'m',q:"Giardiasis: Giardiasis is a parasitic disease caused by:",o:["Cestodes","Protozoan","Trematodes","Nematodes","Others"],a:"Protozoan"},
+        {n:173,t:'m',q:"Find 1 of all is not high-risk groups of Giardiasis include:",o:["Infants","International adoptees","Young children","Travelers","Immuno competent individuals"],a:"Immuno competent individuals"},
+        {n:174,t:'m',q:"Reservoirs (definitive host) of Giardiasis include:",o:["Bears","Humans","Primates","Cattle","A+B+C+D"],a:"A+B+C+D"},
+        {n:175,t:'m',q:"In 2013 people with symptomatic giardiasis in the world :",o:["80 million","180 million","280 million","380 million","480 million"],a:"280 million"},
+        {n:176,t:'m',q:"The infective stage of G. intestinalis is:.",o:["Giardia trophozoites","Giardia cysts","Young trophozoite of giardia","Adult giardia trophozoites","Others"],a:"Giardia cysts"},
+        {n:177,t:'m',q:"Causes of G. intestinalis include:",o:["Eating safe food","Swallowing non contaminated water","Person-to-person contact","Homosexual","A+B+C+D"],a:"Person-to-person contact"},
+        {n:178,t:'m',q:"High risk factors for Giardiasis include:",o:["Travelers to non endemic areas","Live in a household with, people who are not sick with giardiasis","Immuno competent individuals","Sexually active homosexual men","Others"],a:"Sexually active homosexual men"},
+        {n:179,t:'m',q:"1 of all is not the true answer the transmission of Giardiasis:",o:["Swimming pools","Faeco-oral route","Direct contact with infected animals","Blood transfusion","Direct contact contaminated objects"],a:"Blood transfusion"},
+        {n:180,t:'m',q:"Incubation period of Giardiasis:",o:["1-2 hours","1-2 days","1-2 months","1-2 years","Others"],a:"Others"},
+        {n:181,t:'m',q:"Symptoms of Giardiasis include:",o:["Weight loss","Bloating","Loss of appetite","A+B","A+B+C"],a:"A+B+C"},
+        {n:182,t:'m',q:"Diagnosis of Giardiasis include:",o:["Blood examination","Fecal examination","Duodenal fluid examination","Bile examination","B+C+D"],a:"B+C+D"},
+        {n:183,t:'m',q:"Treatment of G.intestinalis can include:",o:["Albendazole","Metronidazole","Furazolidone","B+C","A+B+C"],a:"B+C"},
+        {n:184,t:'m',q:"Differential diagnosis of G.intestinalis can include:",o:["Amibiasis","Cryptosporidiosis","Bacterial gastroenteritis","Trchomoniasis","Hymenolepis nana"],a:"Cryptosporidiosis"},
+        {n:185,t:'m',q:"Species of giardia include:",o:["2 different species","3 different species","4 different species","5 different species","Others"],a:"Others"},
+        {n:186,t:'m',q:"Complications of giardiasis include:",o:["Dehydration","Anemia","Appendicitis","Bronchitis","Encephalitis"],a:"Dehydration"},
+        {n:187,t:'m',q:"Prognosis of giardiasis includes:",o:["Death","Usually good","Re-infection can occur","B+C","A+B+C"],a:"B+C"},
+        {n:188,t:'m',q:"1 of all is not the true answer the prevention of Giardiasis includes:",o:["Safe drinking water","Travellers to endemic areas should avoid eating uncooked foods","Breast-feeding is not protective","Hand washing and hygiene","Minimizing contact and contamination during sex"],a:"Breast-feeding is not protective"},
+        {n:189,t:'m',q:"Trichomoniasis vaginalis: In the world the sexually transmitted infection (STI) with Trichomonas vaginalis infection estimated per year around:",o:["248 million new cases","248 million new and old cases","200 million new cases","100 million new cases","50 million new cases"],a:"248 million new cases"},
+        {n:190,t:'m',q:"Hote of Trichomonas vaginalis infection include:",o:["Men","Women","Animal","A+B","A+B+C"],a:"A+B"},
+        {n:191,t:'m',q:"Trichomonas vaginalis resides in the:",o:["Upper genital female tract","Lower genital female tract","Male urethra","Male prostate","B+C+D"],a:"B+C+D"},
+        {n:192,t:'m',q:"Trichomonas vaginalis is transmitted by:",o:["Indirect contact","Airborn route","Sexual intercourse","Water and food","A+B+C+D"],a:"Sexual intercourse"},
+        {n:193,t:'m',q:"Risks factors of Trichomonas vaginalis include:",o:["Having multiple sexual partners","Sex without a condom","Prior infection with trichomoniasis","A history of other STIs","A+B+C+D"],a:"A+B+C+D"},
+        {n:194,t:'m',q:"Incubation period of Trichomonas vaginalis include:",o:["Between 3 to 28 days","Average 7 days","May survive in a host for 2+ years","A+B","A+B+C"],a:"A+B+C"},
+        {n:195,t:'m',q:"Symptoms of Trichomonas vaginalisin in women include:",o:["Burning sensation after ejaculation","Unusual penile discharge with a strong odor","Tingling inside the penis","Discomfort during intercourse","Others"],a:"Discomfort during intercourse"},
+        {n:196,t:'m',q:"Symptoms of Trichomonas vaginalis in man include:",o:["Blood spotting","Burning sensation after ejaculation","Abdominal pain","Genital itching and/or burning","Discomfort during intercourse"],a:"Burning sensation after ejaculation"},
+        {n:197,t:'m',q:"Treatment of Trichomonas vaginalis include:",o:["Treat the patients et partners at the same time","Local Treatment","Fasigyne","Metronidazol","A+B+C+D"],a:"A+B+C+D"},
+        {n:198,t:'m',q:"Complications of Trichomonas vaginalis include:",o:["Risk of developing pneumonia infection","Acute respiratory infection","Meningitis","Appendicitis","Low birth weight"],a:"Low birth weight"}
+        ];
+
+        let quizDataPart7 = [
+        {n:199,t:'m',q:"Prognosis of Trichomonas vaginalis include:",o:["The cure rate is 90% if all sexual partners are treated at the same time","The prognosis for treated is excellent","Any sexual partner is treated, reinfection is likely","A+B","B+C"],a:"A+B"},
+        {n:200,t:'m',q:"Prevention of Trichomonas vaginalis include:",o:["Treatment the patients and partners","Use condoms (male or female) every time you have vaginal or anal sex","Sharing sex toys","A+B","A+B+C"],a:"A+B+C"},
+        {n:201,t:'m',q:"Amebiasis: Amebiasis is a disease caused by a parasite called:",o:["Balantidium coli","Entamoeba Histolytica","Fasciolopsis","Trichuris trichiura","Others"],a:"Entamoeba Histolytica"},
+        {n:202,t:'m',q:"Incidence of amebiasis is higher in:",o:["Africa country","Occidental countries","Developped countries","Developing countries","Others"],a:"Developing countries"},
+        {n:203,t:'m',q:"Industrialized countries, risk groups of amebiasis include:",o:["Travelers to endemic area","Male homosexuals","Institutionalized populations","A÷B","A÷B÷C"],a:"A÷B÷C"},
+        {n:204,t:'m',q:"Prevalence of amebic infection varies with:",o:["Level of sanitation","Higher in tropics and subtropics than in temperate climates","Lower in tropics and subtropics than in temperate climates","A+B","B+C"],a:"A+B"},
+        {n:205,t:'m',q:"The leading cause of mortality due to parasitic disease in humans with Entamoeba histolytica is the:",o:["First","Second","Third","Fourth","Others"],a:"Second"},
+        {n:206,t:'m',q:"Different form of E. histolytica include:",o:["Precyst","Cyst","Trophozoite","A+B","A+B+C"],a:"A+B+C"},
+        {n:207,t:'m',q:"Trophozoite form of Entamoeba Histolytica includes:",o:["Oval-shaped","Spherical","Thin cell membrane","Single nucleus","A+B+c+D"],a:"A+B+c+D"},
+        {n:208,t:'m',q:"Characteristics the cysts of amebiase include:",o:["Mature cysts (spherical, 12–15 µm in diameter) are passed in the feces of an infected human","Cysts (infective), only exist outside the host","Non-motile and surrounded by a wall that includes chitin to help survive the acid in the stomach","A+B","A+B+C"],a:"A+B+C"},
+        {n:209,t:'m',q:"Hote the parasite of amebiasis include:",o:["Humans","Soil","Water","A+B","A+B+C"],a:"Humans"},
+        {n:210,t:'m',q:"The lifecycle of Amebiasis include:",o:["Complex","Very simple","Sometime complex and sometime simple","Depend the immunities of the individuals","All of above"],a:"Very simple"},
+        {n:211,t:'m',q:"Risk factors of Amebiasis include:",o:["People who live in developing countries","Although anyone can have this disease","Poor sanitary conditions","Men who have sex with men","A+B+C+D"],a:"A+B+C+D"},
+        {n:212,t:'m',q:"Transmission of amebiasis include:",o:["Food or drink contaminated with feces containing the E.his cyst","Veneral transmission among homosexual males (oral-anal)","Direct contact of person to person (fecal-oral)","Use of human feces (night soil) for soil fertilizer","A+B+C+D"],a:"A+B+C+D"},
+        {n:213,t:'m',q:"Mild symptoms of amebiasis include:",o:["Abdominal tenderness","Diarrhea or dysentery","Vomiting","Bloody stools 10 to 20 stools per day","Fever"],a:"Diarrhea or dysentery"},
+        {n:214,t:'m',q:"Severe symptoms of amebiasis include:",o:["Diarrhea or dysentery","Bloody stools 10 to 20 stools per day","Weight loss","Cramping","Chronic fatigue"],a:"Bloody stools 10 to 20 stools per day"},
+        {n:215,t:'m',q:"Diagnosis of amebiasis based on:",o:["Stool examination","Antigen detection (ELISA assays)","Antibody detection (Indirect hemagglutination)","A+B","A+B+C"],a:"A+B+C"},
+        {n:216,t:'m',q:"Differential diagnosis of amebiasis include:",o:["Pneumonia","Abdominal Abscess","Abdominal perforation","A+B","A+B+C"],a:"A+B+C"},
+        {n:217,t:'m',q:"Treatment intestinal amebiasis with:",o:["Emetine hydrochloride","Metronidazole","Chloroquine","A+B","A+B+C"],a:"A+B+C"},
+        {n:218,t:'m',q:"Treatment extra intestinal amebiasis with:",o:["Metronidazole","Dehydroemetine","Cephalosporine","A+B","A+B+C"],a:"A+B"},
+        {n:219,t:'m',q:"Complications of amebiasis include:",o:["Appendicitis","Liver abscess","Meningitis","Encephalitis","A+B+C+D"],a:"Liver abscess"},
+        {n:220,t:'m',q:"Prognosis of amebiasis include:",o:["Untreated invasive amoebiasis is frequently good","Relapse possible","With treatment improvement usually occurs with a few days","A+B","B+C"],a:"B+C"},
+        {n:221,t:'m',q:"Prevention of amebiasis include:",o:["Drink purified water","Eat unpeeled fruit","Eat uncooked vegetables","Drink unpurified water","A+B+C"],a:"Drink purified water"},
+        {n:222,t:'m',q:"Balantidiasis: Balantidiasis is a disease caused by the parasite include:",o:["Schistosoma","Fasciolopsis","Balantidium coli","Onchocerca volvulus","Echinococcus granulosus"],a:"Balantidium coli"},
+        {n:223,t:'m',q:"Trophozoite formes of Balantidium coli include:",o:["50-130 µm long","Covered in cilia","Micro nuclei and macro nuclei","A+B","A+B+C"],a:"A+B+C"},
+        {n:224,t:'m',q:"Cyst forms of Balantidium coli include:",o:["Reproductive","Not infective","4-6 µm across","Only macronucleus","A+B+C+D"],a:"Only macronucleus"},
+        {n:225,t:'m',q:"Host of balantidium coli parasite include:",o:["Human","Dogs","Pigs","Monkeys","A+B+C+D"],a:"A+B+C+D"},
+        {n:226,t:'m',q:"Life cycle of balantidium coli parasite include:",o:["Pig accidental host","Route: Ingestion","Reproduction: Only sexual","A+B","A+B+C"],a:"A+B"},
+        {n:227,t:'m',q:"Causes of balantidiasis include:",o:["By infection called balantidiasis","Parasite passed directly to humans by contact with pig feces","Indirectly by drinking contaminated water","A+B","A+B+C"],a:"A+B+C"},
+        {n:228,t:'m',q:"Risk factors of balantidiasis include:",o:["Handling fertilizer contaminated with pig excrement","Poor nutrition, alcoholism, and immuno-suppression","Living in areas where the water supply may be not contaminated by the excrement of animals","A+B","A+B+C"],a:"A+B"},
+        {n:229,t:'m',q:"Incubation period of balantidiasis include:",o:["Depends on the infective dose and the health of the patient","Not depends on the infective dose and the health of the patient","10-15 days","5-7 days","A+C"],a:"Depends on the infective dose and the health of the patient"},
+        {n:230,t:'m',q:"Sign and symptoms of balantidiasis include:",o:["Diarrhea","Colitis","Ulceration to gut wall","Dysentery","A+B+C+D"],a:"A+B+C+D"},
+        {n:231,t:'m',q:"Diagnosis of balantidiasis include:",o:["Biopsy","Examination of patient’s stool","Sigmoid scope","A+B","A+B+C"],a:"A+B+C"},
+        {n:232,t:'m',q:"Drugs are commonly used and administered for treatment of balantidiasis include:",o:["Rifampicine","Mebendazol","Tetracycline","Albendazol","Chloramphenicol"],a:"Tetracycline"},
+        {n:233,t:'m',q:"Complications of balantidiasis include:",o:["Meningitis","Intestinal perforation","Encephalitis","Urinary Infection","Pneumonia"],a:"Intestinal perforation"},
+        {n:234,t:'m',q:"Prognosis of balantidiasis include:",o:["Not dependent on the patient's overall health","Severely infected patients occasionally die as a result of a tear in the intestinal Wall consequent loss of blood","Most patients with balantidiasis is good if treated in time with appropriate antibiotics","A+B","B+C"],a:"B+C"},
+        {n:235,t:'m',q:"Control and prevention of balantidiasis include:",o:["Persons walking boot over non contaminated soil","Wearing covered footwear in areas where the disease is endemic","Prevention and control sanitary disposal of human and pigs feces","A+C","B+C"],a:"Prevention and control sanitary disposal of human and pigs feces"}
+        ];
+
+        let quizData;
+        let currentPart = 1;
+        let quizState = {};
+
+        const correctSynth = new Tone.Synth().toDestination();
+        const incorrectSynth = new Tone.Synth().toDestination();
+        let audioStarted = false;
+
+        const part1Btn = document.getElementById('part1-btn');
+        const part2Btn = document.getElementById('part2-btn');
+        const part3Btn = document.getElementById('part3-btn');
+        const part4Btn = document.getElementById('part4-btn');
+        const part5Btn = document.getElementById('part5-btn');
+        const part6Btn = document.getElementById('part6-btn');
+        const part7Btn = document.getElementById('part7-btn');
+        const quizView = document.getElementById('quiz-view');
+        const editView = document.getElementById('edit-view');
+        const practiceSheetBtn = document.getElementById('practice-sheet-btn');
+        const practiceSheetView = document.getElementById('practice-sheet-view');
+        const showAllBtn = document.getElementById('show-all-btn');
+        const allQuestionsView = document.getElementById('all-questions-view');
+        const editQuizBtn = document.getElementById('edit-quiz-btn');
+        const applyPreviewBtn = document.getElementById('apply-preview-btn');
+        const generateSaveCodeBtn = document.getElementById('generate-save-code-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const addQuestionBtn = document.getElementById('add-question-btn');
+        const editQuestionsContainer = document.getElementById('edit-questions-container');
+        const editQuestionNavArea = document.getElementById('edit-question-navigation');
+        const exportArea = document.getElementById('export-area');
+        const exportOutput = document.getElementById('export-output');
+        const copyFeedbackEl = document.getElementById('copy-feedback');
+
+        const mainScoreTextEl = document.getElementById('main-score-text');
+        const questionNavArea = document.getElementById('question-navigation');
+        const questionArea = document.getElementById('question-area');
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const answerArea = document.getElementById('answer-area');
+        const feedbackArea = document.getElementById('feedback-area');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        const redoPartBtn = document.getElementById('redo-part-btn');
+        const resultsArea = document.getElementById('results-area');
+        const resultsScoreEl = document.getElementById('results-score');
+        const summaryEl = document.getElementById('summary');
+        const restartBtn = document.getElementById('restart-btn');
+
+        let isAnswered = false;
+
+        async function startAudio() {
+            if (!audioStarted) {
+                await Tone.start();
+                audioStarted = true;
+            }
+        }
+        
+        function switchPart(part) {
+            currentPart = part;
+            const buttons = [part1Btn, part2Btn, part3Btn, part4Btn, part5Btn, part6Btn, part7Btn];
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-900');
+            });
+            
+            if (part === 1) { quizData = quizDataPart1; part1Btn.classList.add('bg-indigo-600', 'text-white'); }
+            else if (part === 2) { quizData = quizDataPart2; part2Btn.classList.add('bg-indigo-600', 'text-white'); }
+            else if (part === 3) { quizData = quizDataPart3; part3Btn.classList.add('bg-indigo-600', 'text-white'); }
+            else if (part === 4) { quizData = quizDataPart4; part4Btn.classList.add('bg-indigo-600', 'text-white'); }
+            else if (part === 5) { quizData = quizDataPart5; part5Btn.classList.add('bg-indigo-600', 'text-white'); }
+            else if (part === 6) { quizData = quizDataPart6; part6Btn.classList.add('bg-indigo-600', 'text-white'); }
+            else { quizData = quizDataPart7; part7Btn.classList.add('bg-indigo-600', 'text-white'); }
+            
+            document.getElementById('quiz-subtitle').textContent = `Subject: Microbiology ( ${quizData.length} questions)`;
+            loadQuizView();
+        }
+
+        function updateScoreText() {
+            mainScoreTextEl.innerHTML = `Score: ${quizState[currentPart].score} / ${quizData.length}`;
+        }
+
+        function startQuiz() { initializeQuiz(); }
+        
+        function initializeQuiz() {
+            quizState = {
+                1: { userAnswers: [], score: 0, currentQuestionIndex: 0 },
+                2: { userAnswers: [], score: 0, currentQuestionIndex: 0 },
+                3: { userAnswers: [], score: 0, currentQuestionIndex: 0 },
+                4: { userAnswers: [], score: 0, currentQuestionIndex: 0 },
+                5: { userAnswers: [], score: 0, currentQuestionIndex: 0 },
+                6: { userAnswers: [], score: 0, currentQuestionIndex: 0 },
+                7: { userAnswers: [], score: 0, currentQuestionIndex: 0 }
+            };
+            currentPart = 1;
+            switchPart(1); 
+        }
+        
+        function loadQuizView() {
+            quizView.classList.remove('hidden');
+            editView.classList.add('hidden');
+            practiceSheetView.classList.add('hidden');
+            allQuestionsView.classList.add('hidden');
+            questionNavArea.classList.remove('hidden');
+            questionArea.classList.remove('hidden');
+            answerArea.classList.remove('hidden');
+            resultsArea.classList.add('hidden');
+            renderQuestionButtons();
+            showQuestion();
+            updateScoreText();
+        }
+
+        function renderQuestionButtons() {
+            questionNavArea.innerHTML = '';
+            quizData.forEach((question, index) => {
+                const button = document.createElement('button');
+                button.textContent = question.n;
+                button.classList.add('question-nav-btn', 'border-2', 'border-gray-300', 'rounded-md');
+                button.addEventListener('click', () => {
+                    quizState[currentPart].currentQuestionIndex = index;
+                    showQuestion();
+                });
+                questionNavArea.appendChild(button);
+            });
+        }
+        
+        function updateQuestionButtonStyles() {
+            const buttons = Array.from(questionNavArea.children);
+            buttons.forEach((button, index) => {
+                button.classList.remove('active', 'answered-correct', 'answered-incorrect');
+                if (quizState[currentPart].userAnswers[index]) {
+                    if(quizState[currentPart].userAnswers[index].isCorrect) button.classList.add('answered-correct');
+                    else button.classList.add('answered-incorrect');
+                }
+            });
+            const currentQuestionIndex = quizState[currentPart].currentQuestionIndex;
+            if(buttons[currentQuestionIndex]) buttons[currentQuestionIndex].classList.add('active');
+        }
+
+        function showQuestion() {
+            resetState();
+            if (quizData.length === 0) {
+                questionTextEl.innerHTML = "No questions in this part.";
+                questionNavArea.innerHTML = '';
+                answerArea.innerHTML = '';
+                nextBtn.classList.add('hidden');
+                prevBtn.classList.add('hidden');
+                questionNumberEl.innerHTML = `Question 0/0`;
+                return;
+            }
+            const currentQuestionIndex = quizState[currentPart].currentQuestionIndex;
+            const userAnswers = quizState[currentPart].userAnswers;
+            const currentQuestion = quizData[currentQuestionIndex];
+            isAnswered = userAnswers[currentQuestionIndex] !== undefined;
+
+            if (isAnswered) redoBtn.classList.remove('hidden');
+
+            questionNumberEl.innerHTML = `Question ${currentQuestion.n}/${quizData.length}`;
+            questionTextEl.innerHTML = `${currentQuestion.q}`;
+            
+            if (currentQuestion.t === 'm') {
+                answerArea.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+                currentQuestion.o.forEach((optionEn) => {
+                    const button = document.createElement('button');
+                    button.innerHTML = `<span>${optionEn}</span>`;
+                    button.classList.add('option-btn', 'w-full', 'p-4', 'border-2', 'border-gray-300', 'rounded-lg', 'text-left', 'hover:bg-gray-100');
+                    button.addEventListener('click', () => selectAnswer(button, optionEn, currentQuestionIndex, answerArea, feedbackArea));
+
+                    if(isAnswered) {
+                        button.disabled = true;
+                        const userAnswerData = userAnswers[currentQuestionIndex];
+                        const correctAnswerEn = currentQuestion.a;
+                        if (optionEn.trim() === correctAnswerEn.trim()) button.classList.add('correct');
+                        if (optionEn.trim() === userAnswerData.answer.trim() && !userAnswerData.isCorrect) button.classList.add('incorrect');
+                    }
+                    answerArea.appendChild(button);
+                });
+            } else if (currentQuestion.t === 'f') {
+                answerArea.className = 'flex flex-col items-center gap-4 mt-4';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'fill-in-input';
+                input.className = 'w-full max-w-lg p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+                input.placeholder = 'Type your answer here...';
+
+                const submitBtn = document.createElement('button');
+                submitBtn.textContent = 'Submit Answer';
+                submitBtn.className = 'bg-indigo-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-600 transition-colors duration-300 shadow-md';
+                submitBtn.addEventListener('click', () => checkFillInAnswer(input, currentQuestionIndex, answerArea, feedbackArea));
+
+                answerArea.appendChild(input);
+                answerArea.appendChild(submitBtn);
+
+                if (isAnswered) {
+                    const userAnswerData = userAnswers[currentQuestionIndex];
+                    input.value = userAnswerData.answer;
+                    input.disabled = true;
+                    submitBtn.disabled = true;
+                    input.classList.add(userAnswerData.isCorrect ? 'correct' : 'incorrect');
+                    if (!userAnswerData.isCorrect) {
+                        feedbackArea.innerHTML = `Wrong! The correct answer is: ${currentQuestion.a}`;
+                        feedbackArea.className = 'mt-2 text-center text-md font-medium text-red-600';
+                    } else {
+                         feedbackArea.innerHTML = `Correct!`;
+                         feedbackArea.className = 'mt-2 text-center text-md font-medium text-green-600';
+                    }
+                }
+            }
+            updateQuestionButtonStyles();
+            updateButtonVisibility();
+        }
+        
+        function resetState() {
+            feedbackArea.textContent = '';
+            answerArea.innerHTML = '';
+            redoBtn.classList.add('hidden');
+        }
+
+        function updateButtonVisibility() {
+            const currentQuestionIndex = quizState[currentPart].currentQuestionIndex;
+            prevBtn.classList.toggle('hidden', currentQuestionIndex === 0);
+            const allAnswered = quizState[currentPart].userAnswers.filter(Boolean).length === quizData.length;
+            nextBtn.classList.toggle('hidden', allAnswered);
+            if (currentQuestionIndex === quizData.length - 1 || allAnswered) {
+                 nextBtn.innerHTML = `<span class="font-semibold">Show Results</span>`;
+            } else {
+                 nextBtn.innerHTML = `<span class="font-semibold">Next Question</span>`;
+            }
+        }
+        
+        async function checkFillInAnswer(inputElement, questionIndex, container, feedbackEl) {
+             await startAudio();
+            if (quizState[currentPart].userAnswers[questionIndex]) return;
+
+            const userAnswer = inputElement.value;
+            const currentQuestion = quizData[questionIndex];
+            const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.a.trim().toLowerCase();
+
+            inputElement.disabled = true;
+            container.querySelector('button').disabled = true;
+
+            if (isCorrect) {
+                quizState[currentPart].score++;
+                correctSynth.triggerAttackRelease("C5", "8n", Tone.now());
+                inputElement.classList.add('correct');
+                 if (feedbackEl) {
+                    feedbackEl.innerHTML = `Correct!`;
+                    feedbackEl.className = 'mt-2 text-center text-md font-medium text-green-600 practice-feedback';
+                }
+            } else {
+                const now = Tone.now();
+                incorrectSynth.triggerAttackRelease("G3", "16n", now);
+                incorrectSynth.triggerAttackRelease("F#3", "8n", now + 0.1);
+                inputElement.classList.add('incorrect');
+                 if (feedbackEl) {
+                    feedbackEl.innerHTML = `Wrong! The correct answer is: <strong>${currentQuestion.a}</strong>`;
+                    feedbackEl.className = 'mt-2 text-center text-md font-medium text-red-600 practice-feedback';
+                }
+            }
+
+            quizState[currentPart].userAnswers[questionIndex] = { isCorrect, answer: userAnswer };
+            
+            if (!practiceSheetView.classList.contains('hidden')) {
+                const practiceRedoBtn = document.getElementById(`ps-redo-btn-${questionIndex}`);
+                if (practiceRedoBtn) practiceRedoBtn.classList.remove('hidden');
+            } else {
+                redoBtn.classList.remove('hidden');
+            }
+
+            updateScoreText();
+            updateQuestionButtonStyles();
+            updateButtonVisibility();
+        }
+
+
+        async function selectAnswer(button, selectedOptionEn, questionIndex, container, feedbackEl) {
+            await startAudio();
+            if (quizState[currentPart].userAnswers[questionIndex]) return;
+            
+            const allButtons = container.querySelectorAll('button');
+            allButtons.forEach(btn => { btn.disabled = true; });
+
+            const currentQuestion = quizData[questionIndex];
+            const isCorrect = selectedOptionEn.trim() === currentQuestion.a.trim();
+            
+            if (isCorrect) {
+                quizState[currentPart].score++;
+                correctSynth.triggerAttackRelease("C5", "8n", Tone.now());
+                button.classList.add('correct');
+                if (feedbackEl) {
+                    feedbackEl.innerHTML = `Correct!`;
+                    feedbackEl.className = 'mt-2 text-center text-md font-medium text-green-600 practice-feedback';
+                }
+            } else {
+                const now = Tone.now();
+                incorrectSynth.triggerAttackRelease("G3", "16n", now);
+                incorrectSynth.triggerAttackRelease("F#3", "8n", now + 0.1);
+                button.classList.add('incorrect');
+                 if (feedbackEl) {
+                    feedbackEl.innerHTML = `Wrong! The correct answer is: ${currentQuestion.a}`;
+                    feedbackEl.className = 'mt-2 text-center text-md font-medium text-red-600 practice-feedback';
+                }
+                allButtons.forEach(btn => {
+                    if (btn.children[0].textContent.trim() === currentQuestion.a.trim()) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            quizState[currentPart].userAnswers[questionIndex] = { isCorrect, answer: selectedOptionEn };
+
+            if (!practiceSheetView.classList.contains('hidden')) {
+                const practiceRedoBtn = document.getElementById(`ps-redo-btn-${questionIndex}`);
+                if (practiceRedoBtn) practiceRedoBtn.classList.remove('hidden');
+            } else {
+                redoBtn.classList.remove('hidden');
+            }
+
+            updateScoreText();
+            updateQuestionButtonStyles();
+            updateButtonVisibility();
+        }
+        
+        function togglePracticeSheetView() {
+            quizView.classList.toggle('hidden');
+            practiceSheetView.classList.toggle('hidden');
+            allQuestionsView.classList.add('hidden');
+
+            if (!practiceSheetView.classList.contains('hidden')) {
+                renderPracticeSheet();
+                practiceSheetBtn.textContent = 'Back to Quiz';
+            } else {
+                practiceSheetBtn.textContent = 'Practice Sheet';
+                loadQuizView();
+            }
+        }
+
+        function toggleAllQuestionsView() {
+            quizView.classList.toggle('hidden');
+            allQuestionsView.classList.toggle('hidden');
+            practiceSheetView.classList.add('hidden');
+
+            if (!allQuestionsView.classList.contains('hidden')) {
+                renderAllQuestions();
+                showAllBtn.textContent = 'Back to Quiz';
+            } else {
+                showAllBtn.textContent = 'Show Answers';
+            }
+        }
+
+        function renderAllQuestions() {
+            allQuestionsView.innerHTML = '';
+            const title = document.createElement('h2');
+            title.className = 'text-3xl font-bold text-center mb-6 text-gray-800';
+            title.textContent = `All Questions & Answers - Part ${currentPart}`;
+            allQuestionsView.appendChild(title);
+
+            quizData.forEach(q => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'mb-6 p-4 border rounded-lg bg-gray-50';
+                let contentHTML = `<p class="font-bold text-lg mb-2">${q.n}. ${q.q}</p>`;
+
+                if (q.t === 'm') {
+                    contentHTML += '<ul class="list-disc list-inside space-y-1">';
+                    q.o.forEach(option => {
+                        const isCorrect = option.trim() === q.a.trim();
+                        contentHTML += `<li class="${isCorrect ? 'text-green-700 font-semibold' : 'text-gray-700'}">${option}${isCorrect ? ' &check;' : ''}</li>`;
+                    });
+                    contentHTML += '</ul>';
+                } else if (q.t === 'f') {
+                     contentHTML += `<p class="text-green-700 font-semibold">Answer: ${q.a}</p>`;
+                }
+                questionDiv.innerHTML = contentHTML;
+                allQuestionsView.appendChild(questionDiv);
+            });
+            
+            const backBtn = document.createElement('button');
+            backBtn.className = 'mt-8 bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-lg block mx-auto';
+            backBtn.innerHTML = '<span class="font-semibold">Back to Quiz</span>';
+            backBtn.addEventListener('click', toggleAllQuestionsView);
+            allQuestionsView.appendChild(backBtn);
+        }
+
+        function renderPracticeSheet() {
+            practiceSheetView.innerHTML = ''; 
+            const title = document.createElement('h2');
+            title.className = 'text-3xl font-bold text-center mb-6 text-gray-800';
+            title.textContent = `Practice Sheet - Part ${currentPart}`;
+            practiceSheetView.appendChild(title);
+
+            quizData.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.id = `ps-question-${index}`;
+                questionDiv.className = 'mb-6 p-4 border rounded-lg bg-gray-50';
+                
+                const questionHeader = document.createElement('div');
+                questionHeader.className = 'flex justify-between items-start';
+                
+                const questionTitle = document.createElement('p');
+                questionTitle.className = 'font-bold text-lg mb-2 flex-grow';
+                questionTitle.innerHTML = `${q.n}. ${q.q}`;
+                
+                const redoBtn = document.createElement('button');
+                redoBtn.id = `ps-redo-btn-${index}`;
+                redoBtn.textContent = 'Redo';
+                redoBtn.className = 'hidden bg-yellow-500 text-white font-bold py-1 px-4 rounded-lg hover:bg-yellow-600 text-sm';
+                redoBtn.addEventListener('click', () => redoPracticeSheetQuestion(index));
+                
+                questionHeader.appendChild(questionTitle);
+                questionHeader.appendChild(redoBtn);
+
+                const answersContainer = document.createElement('div');
+                const feedbackEl = document.createElement('div');
+                feedbackEl.className = 'practice-feedback';
+
+                questionDiv.appendChild(questionHeader);
+
+                if (q.t === 'm') {
+                    answersContainer.className = 'grid grid-cols-1 md:grid-cols-2 gap-3 mt-4';
+                    q.o.forEach(optionEn => {
+                        const button = document.createElement('button');
+                        button.innerHTML = `<span>${optionEn}</span>`;
+                        button.className = 'option-btn w-full p-3 border-2 border-gray-300 rounded-lg text-left hover:bg-gray-100';
+                        button.addEventListener('click', () => selectAnswer(button, optionEn, index, answersContainer, feedbackEl));
+                        answersContainer.appendChild(button);
+                    });
+                } else if (q.t === 'f') {
+                    answersContainer.className = 'flex flex-col items-start gap-3 mt-4';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'w-full max-w-md p-2 border-2 border-gray-300 rounded-lg';
+                    const submitBtn = document.createElement('button');
+                    submitBtn.textContent = 'Submit';
+                    submitBtn.className = 'bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-600 text-sm';
+                    submitBtn.addEventListener('click', () => checkFillInAnswer(input, index, answersContainer, feedbackEl));
+                    answersContainer.appendChild(input);
+                    answersContainer.appendChild(submitBtn);
+                }
+
+                questionDiv.appendChild(answersContainer);
+                questionDiv.appendChild(feedbackEl);
+                practiceSheetView.appendChild(questionDiv);
+
+                if (quizState[currentPart].userAnswers[index]) {
+                    redoBtn.classList.remove('hidden');
+                    const userAnswerData = quizState[currentPart].userAnswers[index];
+                    if (q.t === 'm') {
+                        Array.from(answersContainer.children).forEach(button => {
+                            button.disabled = true;
+                            const optionText = button.textContent.trim();
+                             if (optionText === q.a.trim()) button.classList.add('correct');
+                             if (optionText === userAnswerData.answer.trim() && !userAnswerData.isCorrect) button.classList.add('incorrect');
+                        });
+                    } else if (q.t === 'f') {
+                        const input = answersContainer.querySelector('input');
+                        const submit = answersContainer.querySelector('button');
+                        input.value = userAnswerData.answer;
+                        input.disabled = true;
+                        submit.disabled = true;
+                        input.classList.add(userAnswerData.isCorrect ? 'correct' : 'incorrect');
+                    }
+                }
+            });
+            
+            const backBtn = document.createElement('button');
+            backBtn.className = 'mt-8 bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-lg block mx-auto';
+            backBtn.innerHTML = '<span class="font-semibold">Back to Quiz</span>';
+            backBtn.addEventListener('click', togglePracticeSheetView);
+            practiceSheetView.appendChild(backBtn);
+        }
+
+        function redoPracticeSheetQuestion(questionIndex) {
+            const answerData = quizState[currentPart].userAnswers[questionIndex];
+            if (!answerData) return;
+            if (answerData.isCorrect) quizState[currentPart].score--;
+
+            quizState[currentPart].userAnswers[questionIndex] = undefined;
+            updateScoreText();
+            updateQuestionButtonStyles();
+
+            const questionContainer = document.getElementById(`ps-question-${questionIndex}`);
+            if (!questionContainer) return;
+            const question = quizData[questionIndex];
+            
+            if (question.t === 'm') {
+                const buttons = questionContainer.querySelectorAll('button.option-btn');
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.classList.remove('correct', 'incorrect');
+                });
+            } else if (question.t === 'f') {
+                const input = questionContainer.querySelector('input');
+                const submit = questionContainer.querySelector('button');
+                input.disabled = false;
+                submit.disabled = false;
+                input.value = '';
+                input.classList.remove('correct', 'incorrect');
+            }
+
+            const feedbackEl = questionContainer.querySelector('.practice-feedback');
+            if (feedbackEl) feedbackEl.innerHTML = '';
+            const redoButton = document.getElementById(`ps-redo-btn-${questionIndex}`);
+            if (redoButton) redoButton.classList.add('hidden');
+        }
+
+        function showResults() {
+            questionNavArea.classList.add('hidden');
+            questionArea.classList.add('hidden');
+            answerArea.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            prevBtn.classList.add('hidden');
+            redoBtn.classList.add('hidden');
+            feedbackArea.textContent = '';
+            resultsArea.classList.remove('hidden');
+            resultsScoreEl.innerHTML = `Your final score is ${quizState[currentPart].score} out of ${quizData.length}.`;
+            summaryEl.innerHTML = `<div class="text-center mb-4"><h3 class="text-xl font-bold text-gray-700">Review Your Answers:</h3></div>`; 
+            
+            quizState[currentPart].userAnswers.forEach((ua, index) => {
+                if (!ua) return;
+                const qData = quizData[index];
+                const resultDiv = document.createElement('div');
+                resultDiv.classList.add('mb-4', 'p-3', 'rounded-md', ua.isCorrect ? 'bg-blue-100' : 'bg-red-100');
+                const correctAnswerText = !ua.isCorrect ? `Correct answer: ${qData.a}` : '';
+                resultDiv.innerHTML = `
+                    <p class="font-semibold">${qData.n}. ${qData.q}</p>
+                    <p class="text-sm ${ua.isCorrect ? 'text-blue-700' : 'text-red-700'}">Your answer: ${ua.answer}</p>
+                    <p class="text-sm text-gray-600">${correctAnswerText}</p>`;
+                summaryEl.appendChild(resultDiv);
+            });
+        }
+        
+        function redoQuestion() {
+            const currentQuestionIndex = quizState[currentPart].currentQuestionIndex;
+            const answerData = quizState[currentPart].userAnswers[currentQuestionIndex];
+            if (!answerData) return;
+            if (answerData.isCorrect) quizState[currentPart].score--;
+            quizState[currentPart].userAnswers[currentQuestionIndex] = undefined;
+            updateScoreText();
+            showQuestion();
+        }
+
+        function redoPart() {
+            quizState[currentPart] = { userAnswers: [], score: 0, currentQuestionIndex: 0 };
+            loadQuizView();
+        }
+
+        function toggleEditMode() {
+            quizView.classList.toggle('hidden');
+            editView.classList.toggle('hidden');
+            practiceSheetView.classList.add('hidden');
+            allQuestionsView.classList.add('hidden');
+            if (!editView.classList.contains('hidden')) renderEditView();
+            exportArea.classList.add('hidden');
+        }
+
+        function renderEditView() {
+            editQuestionsContainer.innerHTML = '';
+            editQuestionNavArea.innerHTML = '';
+            quizData.forEach((q, index) => {
+                const navButton = document.createElement('button');
+                navButton.textContent = q.n;
+                navButton.className = 'question-nav-btn border-2 border-gray-300 rounded-md';
+                navButton.addEventListener('click', () => document.getElementById(`edit-q-${index}`).scrollIntoView({ behavior: 'smooth' }));
+                editQuestionNavArea.appendChild(navButton);
+                
+                const qDiv = document.createElement('div');
+                qDiv.id = `edit-q-${index}`;
+                qDiv.className = 'border p-4 rounded-lg mb-4 bg-gray-50 scroll-mt-4';
+                const correctAnserIndex = q.t === 'm' ? q.o.map(o => o.trim()).indexOf(q.a.trim()) : -1;
+
+                qDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="font-bold text-lg">Question ${q.n}</p>
+                        <button class="delete-question-btn bg-red-500 text-white font-bold py-1 px-3 rounded hover:bg-red-600" data-index="${index}">Delete</button>
+                    </div>
+                    <label class="edit-label">Question</label>
+                    <textarea class="edit-input question-en">${q.t === 'm' ? q.q : q.title}</textarea>
+                    <div class="options-container mt-4">
+                    ${q.t === 'm' ? q.o.map((optEn, optIndex) => `
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="radio" name="correct-answer-${index}" ${optIndex === correctAnserIndex ? 'checked' : ''}>
+                                <input type="text" class="edit-input option-en" value="${optEn}">
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                `;
+                editQuestionsContainer.appendChild(qDiv);
+            });
+
+            document.querySelectorAll('.delete-question-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                quizData.splice(parseInt(e.target.dataset.index, 10), 1);
+                renderEditView();
+            }));
+        }
+
+        function getEditedData() {
+            const newQuizData = [];
+            editQuestionsContainer.querySelectorAll('.border.p-4').forEach((form, index) => {
+                const q = { n: index + 1, t: 'm', q: form.querySelector('.question-en').value };
+                const optInputs = Array.from(form.querySelectorAll('.option-en'));
+                const radios = Array.from(form.querySelectorAll('input[type="radio"]'));
+                q.o = optInputs.map(input => input.value);
+                q.a = q.o[radios.findIndex(r => r.checked)];
+                newQuizData.push(q);
+            });
+            return newQuizData;
+        }
+
+        function applyToPreview() {
+            const editedData = getEditedData();
+            if (currentPart === 1) quizDataPart1 = editedData;
+            else if (currentPart === 2) quizDataPart2 = editedData;
+            else if (currentPart === 3) quizDataPart3 = editedData;
+            else if (currentPart === 4) quizDataPart4 = editedData;
+            else if (currentPart === 5) quizDataPart5 = editedData;
+            else if (currentPart === 6) quizDataPart6 = editedData;
+            else quizDataPart7 = editedData;
+            quizData = editedData;
+            toggleEditMode();
+            initializeQuiz();
+        }
+
+        function generateSaveCode() {
+            const data = getEditedData();
+            const varName = `quizDataPart${currentPart}`;
+            exportOutput.value = `let ${varName} = ${JSON.stringify(data, null, 2)};`;
+            exportArea.classList.remove('hidden');
+        }
+
+        part1Btn.addEventListener('click', () => switchPart(1));
+        part2Btn.addEventListener('click', () => switchPart(2));
+        part3Btn.addEventListener('click', () => switchPart(3));
+        part4Btn.addEventListener('click', () => switchPart(4));
+        part5Btn.addEventListener('click', () => switchPart(5));
+        part6Btn.addEventListener('click', () => switchPart(6));
+        part7Btn.addEventListener('click', () => switchPart(7));
+        practiceSheetBtn.addEventListener('click', togglePracticeSheetView);
+        showAllBtn.addEventListener('click', toggleAllQuestionsView);
+        
+        prevBtn.addEventListener('click', () => {
+            if (quizState[currentPart].currentQuestionIndex > 0) {
+                quizState[currentPart].currentQuestionIndex--;
+                showQuestion();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            const allAnswered = quizState[currentPart].userAnswers.filter(Boolean).length === quizData.length;
+            if (quizState[currentPart].currentQuestionIndex < quizData.length - 1 && !allAnswered) {
+                quizState[currentPart].currentQuestionIndex++;
+                showQuestion();
+            } else showResults();
+        });
+        
+        restartBtn.addEventListener('click', startQuiz);
+        redoBtn.addEventListener('click', redoQuestion);
+        redoPartBtn.addEventListener('click', redoPart);
+        editQuizBtn.addEventListener('click', toggleEditMode);
+        applyPreviewBtn.addEventListener('click', applyToPreview);
+        generateSaveCodeBtn.addEventListener('click', generateSaveCode);
+        cancelEditBtn.addEventListener('click', toggleEditMode);
+        addQuestionBtn.addEventListener('click', () => {
+            quizData.push({ n: quizData.length + 1, t: 'm', q: "New Question", o: ["A", "B", "C", "D"], a: "A" });
+            renderEditView();
+        });
+        exportOutput.addEventListener('click', () => {
+            exportOutput.select();
+            document.execCommand('copy');
+            copyFeedbackEl.textContent = 'Code copied!';
+            setTimeout(() => { copyFeedbackEl.textContent = '' }, 2000);
+        });
+
+        window.addEventListener('beforeunload', e => { e.preventDefault(); e.returnValue = ''; });
+
+        initializeQuiz();
+    </script>
+</body>
+</html>
